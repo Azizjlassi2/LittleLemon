@@ -1,6 +1,6 @@
 from pathlib import Path
 import os
-from dotenv import load_dotenv( ) # type: ignore
+from dotenv import load_dotenv # type: ignore
 
 load_dotenv()
 
@@ -29,6 +29,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
+    "rest_framework.authtoken",
+    "LittleLemonApi.apps.LittlelemonapiConfig",
+    "djoser",
+
 ]
 
 MIDDLEWARE = [
@@ -107,3 +112,25 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDER_CLASSES':[
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework_xml.renderers.XMLRenderer',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES':(
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication', # Djoser
+    ),
+    
+}
+
+DJOSER={
+    "USER_ID_FIELD":"username",
+    'PASSWORD_RESET_CONFIRM_URL': '/password/reset/confirm/{uid}/{token}',
+    'ACTIVATION_URL': '/activate/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': True,
+     #"LOGIN_FIELD":"email" #use the email address as the username
+     #now go for LittleLemon.urls for further Configuration
+}
