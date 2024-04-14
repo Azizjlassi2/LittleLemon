@@ -29,8 +29,8 @@ class MenuItemSerializer(serializers.ModelSerializer):
         model  = models.MenuItem
         fields = ['id','title','price', 'stock','featured','category','category_id']
         extra_kwargs = {
-            'price': {'min_value': 0},
-            'stock': {'min_value': 0},
+            'price': {'min_value': 0.0},
+            'stock': {'min_value': 0.0},
             # To make sure that the title field remains unique in the MenuItems table
             'title': {
                     'validators': [
@@ -62,8 +62,8 @@ class CartSerializer(serializers.ModelSerializer):
         model = models.Cart
         fields = '__all__'
         extra_kwargs = {
-            'quantity': {'min_value': 1},
-            'unit_price': {'min_value': 1},
+            'quantity': {'min_value': 1.0},
+            'unit_price': {'min_value': 1.0},
         }
         
 
@@ -80,7 +80,7 @@ class OrderSerializer(serializers.ModelSerializer):
             `total` cannot be equal to 0 or negative
 
             """
-            if value < 1:
+            if value < 1.0:
                 raise serializers.ValidationError("Total cannot be negative or equal to 0")
 
 

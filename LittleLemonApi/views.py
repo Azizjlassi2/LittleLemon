@@ -6,7 +6,7 @@ from django.contrib.auth.models import User , Group
 from .models import*
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated
-
+from django.core.paginator import Paginator , EmptyPage
 
 
 
@@ -18,9 +18,9 @@ class MenuItemsView(APIView):
     
     permission_classes = [IsAuthenticated]
    
-    def get(self,request):
+    def get(self,request) -> Response:
         # Query
-        items = MenuItem.objects.all()
+        items = MenuItem.objects.all().order_by("title")
 
         # Filtering 
         category_name = request.query_params.get('category')
@@ -36,19 +36,31 @@ class MenuItemsView(APIView):
             items = items.filter(title__icontains=search)
         if featured_option:
             items = items.filter(featured=featured_option)
-            
+
         # Ordering
         ordering = request.query_params.get('ordering')
         if ordering:
             ordering_fields = ordering.split(',')
             items.order_by(*ordering_fields)
 
+        # Pagination
+        perpage = request.query_params.get('perpage',default=8)
+        page = request.query_params.get('page',default=1)
+
+
+        paginator = Paginator(items,per_page=perpage)
+        try:
+            items = paginator.page(number=page)
+        except EmptyPage:
+            items = []
+
+
         # Serialization
         serialized_items = MenuItemSerializer(items,many=True)
         return Response(serialized_items.data,status.HTTP_200_OK)
 
 
-    def post(self,request):
+    def post(self,request) -> Response:
         if request.user.groups.filter(name="Manager").exists():
             serialzed_item = MenuItemSerializer(data=request.data)
             if serialzed_item.is_valid():
@@ -62,12 +74,12 @@ class MenuItemView(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def get(self,request,id):
+    def get(self,request,id) -> Response:
         item = get_object_or_404(MenuItem,pk = id)
         serialized_item = MenuItemSerializer(item)
         return Response(serialized_item.data,status.HTTP_200_OK)
 
-    def put(self,request,id):
+    def put(self,request,id) -> Response:
         
         if request.user.groups.filter(name="Manager").exists():
             item = get_object_or_404(MenuItem,pk = id)
@@ -79,7 +91,7 @@ class MenuItemView(APIView):
             return Response(serialized_item.data,status.HTTP_304_NOT_MODIFIED)
         return Response(status.HTTP_403_FORBIDDEN)
         
-    def delete(self,request,id):
+    def delete(self,request,id) -> Response:
 
         if request.user.groups.filter(name="Manager").exists():
             item = get_object_or_404(MenuItem,pk = id)
@@ -96,6 +108,34 @@ class ManagerGroupsView(APIView):
 
     def get(self,request):
         users = User.objects.filter(groups__name__in =["Manager"])
+        
+        # Filtering
+        date_joined  = request.query_params.get('joined')
+        if date_joined:
+            users = users.filter(date_joined__lte=date_joined)
+            
+        # Searching
+        search = request.query_params.get('search')
+        if search:
+            users = users.filter(username__icontains=search)
+
+        # Ordering
+        ordering = request.query_params.get('ordering')
+        if ordering:
+            ordering_fields = ordering.split(',')
+            users.order_by(*ordering_fields)
+
+        # Pagination
+        perpage = request.query_params.get('perpage',default=8)
+        page = request.query_params.get('page',default=1)
+
+        paginator = Paginator(users,per_page=perpage)
+        try:
+            users = paginator.page(number=page)
+        except EmptyPage:
+            users = []
+
+
         serialized_users = UserGroupSerializer(users,many=True)
         return Response(serialized_users.data,status.HTTP_200_OK)
     
@@ -121,13 +161,13 @@ class ManagerGroupView(APIView):
     group_manager_id =  manager_group = Group.objects.get(name="Manager").pk
 
 
-    def get(self,request,id):
+    def get(self,request,id) -> Response:
         user = get_object_or_404(User,pk = id,groups__name__in =["Manager"])
         
         serialized_user = UserGroupSerializer(user)
         return Response(serialized_user.data,status.HTTP_200_OK)
 
-    def put(self,request,id):
+    def put(self,request,id) -> Response:
         
         if request.user.groups.filter(name="Manager").exists():
             
@@ -142,7 +182,7 @@ class ManagerGroupView(APIView):
             return Response(serialized_user.data,status.HTTP_304_NOT_MODIFIED)
         return Response(status.HTTP_403_FORBIDDEN)
         
-    def delete(self,request,id):
+    def delete(self,request,id) -> Response:
 
         if request.user.groups.filter(name="Manager").exists():
             user = get_object_or_404(User,pk = id,groups__name__in =["Manager"])
@@ -157,13 +197,39 @@ class DeliveryCrewGroupsView(APIView):
     
     permission_classes = [IsAuthenticated]
 
-    def get(self,request):
+    def get(self,request) -> Response:
         users = User.objects.filter(groups__name__in =["Delivery Crew"])
+         
+        # Filtering
+        date_joined  = request.query_params.get('joined')
+        if date_joined:
+            users = users.filter(date_joined__lte=date_joined)
+            
+        # Searching
+        search = request.query_params.get('search')
+        if search:
+            users = users.filter(username__icontains=search)
+
+        # Ordering
+        ordering = request.query_params.get('ordering')
+        if ordering:
+            ordering_fields = ordering.split(',')
+            users.order_by(*ordering_fields)
+
+        # Pagination
+        perpage = request.query_params.get('perpage',default=8)
+        page = request.query_params.get('page',default=1)
+
+        paginator = Paginator(users,per_page=perpage)
+        try:
+            users = paginator.page(number=page)
+        except EmptyPage:
+            users = []
         serialized_users = UserGroupSerializer(users,many=True)
         return Response(serialized_users.data,status.HTTP_200_OK)
     
 
-    def post(self,request):
+    def post(self,request) -> Response:
         if request.user.groups.filter(name="Manager").exists():
             
             serialized_user = UserGroupSerializer(data=request.data)
@@ -181,16 +247,15 @@ class DeliveryCrewGroupsView(APIView):
 class DeliveryCrewGroupView(APIView):
     
     permission_classes = [IsAuthenticated]
-    delivery_crew_id =   Group.objects.get(name="Delivery Crew").pk
 
 
-    def get(self,request,id):
+    def get(self,request,id) -> Response:
         user = get_object_or_404(User,pk = id,groups__name__in =["Delivery Crew"])
         
         serialized_user = UserGroupSerializer(user)
         return Response(serialized_user.data,status.HTTP_200_OK)
 
-    def put(self,request,id):
+    def put(self,request,id) -> Response:
         
         if request.user.groups.filter(name="Manager").exists():
             
@@ -205,7 +270,7 @@ class DeliveryCrewGroupView(APIView):
             return Response(serialized_user.data,status.HTTP_304_NOT_MODIFIED)
         return Response(status.HTTP_403_FORBIDDEN)
         
-    def delete(self,request,id):
+    def delete(self,request,id) -> Response:
 
         if request.user.groups.filter(name="Manager").exists():
             user = get_object_or_404(User,pk = id,groups__name__in =["Delivery Crew"])
@@ -218,7 +283,7 @@ class DeliveryCrewGroupView(APIView):
 class CartsView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self,request):
+    def get(self,request) -> Response:
        
         carts = Cart.objects.filter(user=request.user.id)
 
@@ -227,18 +292,26 @@ class CartsView(APIView):
             # Filtering 
             gt_quantity = request.query_params.get('quantity')
             gt_price = request.query_params.get('price')
-            
-            
-
             if gt_quantity:
                 carts = Cart.objects.filter(quantity__gte=gt_quantity)
             if gt_price:
                 carts = Cart.objects.filter(price__gte=gt_price)
 
+        # Pagination
+        perpage = request.query_params.get('perpage',default=8)
+        page = request.query_params.get('page',default=1)
+
+
+        paginator = Paginator(carts,per_page=perpage)
+        try:
+            carts = paginator.page(number=page)
+        except EmptyPage:
+            carts = []
+
         serialized_carts = CartSerializer(carts,many=True)
         return Response(serialized_carts.data,status.HTTP_200_OK)
     
-    def post(self,request):
+    def post(self,request) -> Response:
       
         data = request.data.copy()
         data["user"] = f"{request.user.id}"
@@ -253,7 +326,7 @@ class CartsView(APIView):
         else:
             return Response(serialized_cart.errors, status=status.HTTP_400_BAD_REQUEST)
         
-    def delete(self,request):
+    def delete(self,request) -> Response:
         carts = Cart.objects.filter(user=request.user.id)
         for cart in carts:
             cart.delete()
@@ -303,6 +376,18 @@ class OrdersView(APIView):
         if ordering:
             ordering_fields = ordering.split(',')
             orders.order_by(*ordering_fields)
+        
+     
+        # Pagination
+        perpage = request.query_params.get('perpage',default=8)
+        page = request.query_params.get('page',default=1)
+
+
+        paginator = Paginator(orders,per_page=perpage)
+        try:
+            orders = paginator.page(number=page)
+        except EmptyPage:
+            orders = []
 
         serialized_orders = OrderSerializer(orders,many=True)
         return Response(serialized_orders.data,status.HTTP_200_OK)
@@ -340,7 +425,7 @@ class OrderView(APIView):
        
     permissions_classes = [IsAuthenticated]
 
-    def get(self,request,id):
+    def get(self,request,id) -> Response:
 
 
         order = get_object_or_404(Order,id=id)
@@ -350,7 +435,7 @@ class OrderView(APIView):
             return Response(serialized_order_items.data,status.HTTP_200_OK)
         return Response(serialized_order_items.errors ,status.HTTP_403_FORBIDDEN)
     
-    def put(self,request,id):
+    def put(self,request,id) -> Response:
         if request.user.groups.filter(name="Manager").exists():
 
             order = get_object_or_404(Order,id=id)
@@ -364,7 +449,7 @@ class OrderView(APIView):
 
 
 
-    def patch(self,request,id):
+    def patch(self,request,id) -> Response:
         if request.user.groups.filter(name="Manager").exists():
 
             order = get_object_or_404(Order,id=id)
@@ -383,7 +468,7 @@ class OrderView(APIView):
             else:
                 order.status = True
 
-    def delete(self,request,id):
+    def delete(self,request,id) -> Response:
         if request.user.groups.filter(name="Manager").exists():
             order = get_object_or_404(Order,id=id)
             order.delete()
