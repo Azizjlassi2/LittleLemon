@@ -29,15 +29,20 @@ class MenuItemsView(APIView):
         featured_option = request.query_params.get('featured')
 
         if category_name:
-            items = MenuItem.objects.filter(category__title=category_name)
+            items = items.filter(category__title=category_name)
         if to_price:
-            items = MenuItem.objects.filter(price__lte=to_price)
+            items = items.filter(price__lte=to_price)
         if search:
-            items = MenuItem.objects.filter(title__icontains=title_name)
+            items = items.filter(title__icontains=search)
         if featured_option:
-            items = MenuItem.objects.filter(featured=featured_option)
-        
-        
+            items = items.filter(featured=featured_option)
+            
+        # Ordering
+        ordering = request.query_params.get('ordering')
+        if ordering:
+            ordering_fields = ordering.split(',')
+            items.order_by(*ordering_fields)
+
         # Serialization
         serialized_items = MenuItemSerializer(items,many=True)
         return Response(serialized_items.data,status.HTTP_200_OK)
@@ -293,7 +298,11 @@ class OrdersView(APIView):
         if lt_date:
             orders = orders.filter(date__lte=lt_date)
 
-
+        # Ordering
+        ordering = request.query_params.get('ordering')
+        if ordering:
+            ordering_fields = ordering.split(',')
+            orders.order_by(*ordering_fields)
 
         serialized_orders = OrderSerializer(orders,many=True)
         return Response(serialized_orders.data,status.HTTP_200_OK)
