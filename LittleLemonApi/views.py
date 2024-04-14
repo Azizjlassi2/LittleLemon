@@ -17,9 +17,28 @@ from rest_framework.permissions import IsAuthenticated
 class MenuItemsView(APIView):
     
     permission_classes = [IsAuthenticated]
-
+   
     def get(self,request):
+        # Query
         items = MenuItem.objects.all()
+
+        # Filtering 
+        category_name = request.query_params.get('category')
+        to_price = request.query_params.get('price')
+        title_name = request.query_params.get('title')
+        featured_option = request.query_params.get('featured')
+
+        if category_name:
+            items = MenuItem.objects.filter(category__title=category_name)
+        if to_price:
+            items = MenuItem.objects.filter(price__lte=to_price)
+        if title_name:
+            items = MenuItem.objects.filter(title=title_name)
+        if featured_option:
+            items = MenuItem.objects.filter(featured=featured_option)
+        
+        
+        # Serialization
         serialized_items = MenuItemSerializer(items,many=True)
         return Response(serialized_items.data,status.HTTP_200_OK)
 
@@ -197,6 +216,20 @@ class CartsView(APIView):
     def get(self,request):
        
         carts = Cart.objects.filter(user=request.user.id)
+
+        if request.user.groups.filter(name="Manager").exists():
+            # For Administration And Data Science Features 
+            # Filtering 
+            gt_quantity = request.query_params.get('quantity')
+            gt_price = request.query_params.get('price')
+            
+            
+
+            if gt_quantity:
+                carts = Cart.objects.filter(quantity__gte=gt_quantity)
+            if gt_price:
+                carts = Cart.objects.filter(price__gte=gt_price)
+
         serialized_carts = CartSerializer(carts,many=True)
         return Response(serialized_carts.data,status.HTTP_200_OK)
     
@@ -230,6 +263,8 @@ class OrdersView(APIView):
         Returns all orders with order items created by this user
 
         """
+        # Query
+
         if request.user.groups.filter(name="Manager").exists():
 
             orders = Order.objects.all()
@@ -241,6 +276,25 @@ class OrdersView(APIView):
         else:
             orders = Order.objects.filter(user=request.user.id)
         
+
+        # Filtering
+        gt_quantity = request.query_params.get('quantity')
+        gt_total = request.query_params.get('total')
+        status_option = request.query_params.get('status')
+        lt_date = request.query_params.get('date')
+
+        if gt_quantity:
+            orders= orders.filter(quantity__gte=gt_quantity)
+
+        if gt_total:
+            orders = orders.filter(total__gte=gt_total)
+        if status_option:
+            orders = orders.filter(status=status_option)
+        if lt_date:
+            orders = orders.filter(date__lte=lt_date)
+
+
+
         serialized_orders = OrderSerializer(orders,many=True)
         return Response(serialized_orders.data,status.HTTP_200_OK)
     
