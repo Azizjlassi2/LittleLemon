@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "LittleLemonApi.apps.LittlelemonapiConfig",
     "djoser",
+    "bleach",
 
 ]
 
@@ -123,6 +124,20 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication', # Djoser
     ),
+    'DEFAULT_THROTTLE_CLASSES' : [
+        # Custom Throttles Classes
+        "LittleLemonApi.throttles.ManagerRateThrottle",
+        "LittleLemonApi.throttles.DeliveryCrewRateThrottle",
+        "LittleLemonApi.throttles.CustomerRateThrottle",
+    
+    
+
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        "manager":'30/minute',
+        "delivery-crew":"40/minute" ,
+        'customer':'20/minute',
+    }
     
 }
 

@@ -14,11 +14,18 @@ from django.core.paginator import Paginator , EmptyPage
 
 
 
+
+
 class MenuItemsView(APIView):
     
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]    
+
+   
+
    
     def get(self,request) -> Response:
+
+        
         # Query
         items = MenuItem.objects.all().order_by("title")
 
