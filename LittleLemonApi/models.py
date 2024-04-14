@@ -38,7 +38,7 @@ class Order(models.Model):
     delivery_crew = models.ForeignKey(User,on_delete=models.SET_NULL,related_name="delivery_crew",null=True)
     status = models.BooleanField(db_index=True,default=0)
     total = models.DecimalField(max_digits=6,decimal_places=2)
-    date = models.DateField(db_index=True)
+    date = models.DateField(db_index=True,auto_now_add=True,blank=True, null=True)
     
 
 
@@ -54,4 +54,4 @@ class OrderItem(models.Model):
 
 
     def __str__(self) -> str:
-        return  "Order : {self.quantity}  {self.menuitem.title}"
+        return  f"Order : {self.quantity}  {self.menuitem.title}"

@@ -1,11 +1,15 @@
-from rest_framework.response import Response
+from rest_framework.response import Response 
 from rest_framework.views import APIView
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User , Group
-from .models import MenuItem
+from .models import*
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated
+
+
+
+
 
 
 
@@ -183,7 +187,141 @@ class DeliveryCrewGroupView(APIView):
             user = get_object_or_404(User,pk = id,groups__name__in =["Delivery Crew"])
             message = f"User {user.id} : {user.username} deleted !"
             user.delete()
-            return Response(message,status.HTTP_200_OK)
+            return Response(message,status.HTTP_204_NO_CONTENT)
         return Response(status.HTTP_403_FORBIDDEN)
     
 
+class CartsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self,request):
+       
+        carts = Cart.objects.filter(user=request.user.id)
+        serialized_carts = CartSerializer(carts,many=True)
+        return Response(serialized_carts.data,status.HTTP_200_OK)
+    
+    def post(self,request):
+      
+        data = request.data.copy()
+        data["user"] = f"{request.user.id}"
+        
+        
+        serialized_cart = CartSerializer(data=data)
+        print(serialized_cart)
+        if serialized_cart.is_valid():
+            serialized_cart.save()
+            
+            return Response(serialized_cart.data,status.HTTP_201_CREATED)
+        else:
+            return Response(serialized_cart.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    def delete(self,request):
+        carts = Cart.objects.filter(user=request.user.id)
+        for cart in carts:
+            cart.delete()
+        return Response(status.HTTP_204_NO_CONTENT)
+        
+class OrdersView(APIView):
+
+    permissions_classes = [IsAuthenticated]
+
+    def get(self,request) -> Response:
+        """
+        Returns all orders with order items created by this user
+
+        """
+        if request.user.groups.filter(name="Manager").exists():
+
+            orders = Order.objects.all()
+
+        elif request.user.groups.filter(name="Delivery Crew").exists():
+
+            orders = Order.objects.filter(delivery_crew=request.user.id)
+
+        else:
+            orders = Order.objects.filter(user=request.user.id)
+        
+        serialized_orders = OrderSerializer(orders,many=True)
+        return Response(serialized_orders.data,status.HTTP_200_OK)
+    
+
+    def post(self,request) -> Response :
+
+
+        # Creates a new order item for the current user. 
+        serialized_order = OrderSerializer(data=request.data)
+        if serialized_order.is_valid():           
+            serialized_order.save()
+
+            order = get_object_or_404(Order,user=request.user.id)
+
+
+        # Gets current cart items from the cart  and adds those items to the order items table. 
+            carts = Cart.objects.filter(user=request.user.id)
+
+            for cart in carts:
+
+                new_order_item = OrderItem()
+                new_order_item.order= order
+                new_order_item.menuitem = cart.menuitem
+                new_order_item.quantity = cart.quantity
+                new_order_item.unit_price = cart.unit_price
+                new_order_item.save()
+
+            #Then deletes all items from the cart for this user.
+                cart.delete()
+            return Response(serialized_order.data,status.HTTP_201_CREATED)
+        return Response(serialized_order.errors,status.HTTP_400_BAD_REQUEST)
+
+class OrderView(APIView):
+       
+    permissions_classes = [IsAuthenticated]
+
+    def get(self,request,id):
+
+
+        order = get_object_or_404(Order,id=id)
+        order_items = OrderItem.objects.filter(order=order)
+        if order.user.pk == request.user.id:
+            serialized_order_items = OrderItemSerializer(order_items,many=True)
+            return Response(serialized_order_items.data,status.HTTP_200_OK)
+        return Response(serialized_order_items.errors ,status.HTTP_403_FORBIDDEN)
+    
+    def put(self,request,id):
+        if request.user.groups.filter(name="Manager").exists():
+
+            order = get_object_or_404(Order,id=id)
+            serialized_order = OrderSerializer(order,data=request.data)
+            if serialized_order.is_valid():
+                serialized_order.save()
+                return Response(serialized_order.data,status.HTTP_205_RESET_CONTENT)
+            return Response(serialized_order.errors,status.HTTP_400_BAD_REQUEST)
+
+        return Response(status.HTTP_403_FORBIDDEN)
+
+
+
+    def patch(self,request,id):
+        if request.user.groups.filter(name="Manager").exists():
+
+            order = get_object_or_404(Order,id=id)
+            serialized_order = OrderSerializer(order,data=request.data)
+            if serialized_order.is_valid():
+                serialized_order.save()
+                return Response(serialized_order.data,status.HTTP_206_PARTIAL_CONTENT)
+            return Response(serialized_order.errors,status.HTTP_400_BAD_REQUEST)
+
+
+        elif request.user.groups.filter(name="Delivery Crew").exists():
+            order = get_object_or_404(Order,id=id)
+            
+            if order.status == True:
+                order.status = False
+            else:
+                order.status = True
+
+    def delete(self,request,id):
+        if request.user.groups.filter(name="Manager").exists():
+            order = get_object_or_404(Order,id=id)
+            order.delete()
+            return Response(status.HTTP_204_NO_CONTENT)

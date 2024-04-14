@@ -9,4 +9,7 @@ urlpatterns = [
     path("groups/manager/users/<int:id>/",ManagerGroupView.as_view()),
     path("groups/delivery-crew/users/",DeliveryCrewGroupsView.as_view()),
     path("groups/delivery-crew/users/<int:id>",DeliveryCrewGroupView.as_view()),
+    path("cart/menu-items/",CartsView.as_view()),
+    path("orders/",OrdersView.as_view()),
+    path("orders/<int:id>/",OrderView.as_view()),
 ]
