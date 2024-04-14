@@ -25,15 +25,15 @@ class MenuItemsView(APIView):
         # Filtering 
         category_name = request.query_params.get('category')
         to_price = request.query_params.get('price')
-        title_name = request.query_params.get('title')
+        search = request.query_params.get('search')
         featured_option = request.query_params.get('featured')
 
         if category_name:
             items = MenuItem.objects.filter(category__title=category_name)
         if to_price:
             items = MenuItem.objects.filter(price__lte=to_price)
-        if title_name:
-            items = MenuItem.objects.filter(title=title_name)
+        if search:
+            items = MenuItem.objects.filter(title__icontains=title_name)
         if featured_option:
             items = MenuItem.objects.filter(featured=featured_option)
         
