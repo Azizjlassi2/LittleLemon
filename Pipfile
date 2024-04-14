@@ -9,6 +9,7 @@ djangorestframework = "*"
 python-dotenv = "*"
 djoser = "*"
 django-filter = "*"
+bleach = "*"
 
 [dev-packages]
 

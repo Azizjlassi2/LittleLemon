@@ -2,12 +2,21 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.models import User
 from . import models
+import bleach
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Category
-        fields = ['id','slug','title']
+        fields = ['id','title','slug']
+
+        def validate_title(self, value):
+            return bleach.clean(value)
+        
+        def validate_slug(self, value):
+            return bleach.clean(value)
+
+
 
 
 class MenuItemSerializer(serializers.ModelSerializer):
@@ -18,9 +27,10 @@ class MenuItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = models.MenuItem
-        fields = ['id','title','price', 'featured','category','category_id']
+        fields = ['id','title','price', 'stock','featured','category','category_id']
         extra_kwargs = {
             'price': {'min_value': 0},
+            'stock': {'min_value': 0},
             # To make sure that the title field remains unique in the MenuItems table
             'title': {
                     'validators': [
@@ -30,12 +40,18 @@ class MenuItemSerializer(serializers.ModelSerializer):
                 ]
             }
         }
+        def validate_title(self, value):
+            return bleach.clean(value)
 
 
 class UserGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id',"username","email"]
+
+
+        def validate_username(self, value):
+            return bleach.clean(value)
 
 
 
