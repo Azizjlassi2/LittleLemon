@@ -19,14 +19,15 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class MenuItemSerializer(serializers.ModelSerializer):
+    
 
     
     category_id = serializers.IntegerField(write_only=True)
-    category = CategorySerializer(read_only=True)
+    category = CategorySerializer(read_only=True) #read_only=True -> Not included in serialization
 
     class Meta:
         model  = models.MenuItem
-        fields = ['id','title','price', 'stock','featured','category','category_id']
+        fields = ['title','price', 'stock','featured','category','category_id']
         extra_kwargs = {
             'price': {'min_value': 0.0},
             'stock': {'min_value': 0.0},
@@ -46,7 +47,7 @@ class MenuItemSerializer(serializers.ModelSerializer):
 class UserGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id',"username","email"]
+        fields = ['id',"username","email","password"]
 
 
         def validate_username(self, value):

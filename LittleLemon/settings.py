@@ -20,6 +20,7 @@ DEBUG = os.environ.get("DEBUG")
 
 ALLOWED_HOSTS = []
 
+NOSE_ARGS = ['--nocapture', '--nologcapture',] # For Testing 
 
 # Application definition
 

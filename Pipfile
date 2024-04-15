@@ -10,6 +10,7 @@ python-dotenv = "*"
 djoser = "*"
 django-filter = "*"
 bleach = "*"
+djangorestframework-simplejwt = "*"
 
 [dev-packages]
 

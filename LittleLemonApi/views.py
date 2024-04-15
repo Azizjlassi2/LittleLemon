@@ -1,5 +1,7 @@
 from rest_framework.response import Response 
 from rest_framework.views import APIView
+
+
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User , Group
@@ -13,7 +15,6 @@ from django.core.paginator import Paginator , EmptyPage
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
-
 
 
 
@@ -125,10 +126,10 @@ class MenuItemView(APIView):
             serialized_item = MenuItemSerializer(item,data=request.data)
             if serialized_item.is_valid():
                 serialized_item.save()
-                return Response(serialized_item.data,status.HTTP_206_PARTIAL_CONTENT)
+                return Response(serialized_item.data,status=status.HTTP_206_PARTIAL_CONTENT)
             
-            return Response(serialized_item.data,status.HTTP_304_NOT_MODIFIED)
-        return Response(status.HTTP_403_FORBIDDEN)
+            return Response(serialized_item.data,status=status.HTTP_304_NOT_MODIFIED)
+        return Response(status=status.HTTP_403_FORBIDDEN)
         
     def delete(self,request,id) -> Response:
 
@@ -136,8 +137,8 @@ class MenuItemView(APIView):
             item = get_object_or_404(MenuItem,pk = id)
             message = f"MenuItem {item.id} : {item.title} deleted !"
             item.delete()
-            return Response(message,status.HTTP_200_OK)
-        return Response(status.HTTP_403_FORBIDDEN)
+            return Response(message,status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_403_FORBIDDEN)
     
        
 
@@ -200,7 +201,6 @@ class ManagerGroupsView(APIView):
 class ManagerGroupView(APIView):
     
     permission_classes = [IsAuthenticated]
-    group_manager_id =  manager_group = Group.objects.get(name="Manager").pk
 
 
     def get(self,request,id) -> Response:
