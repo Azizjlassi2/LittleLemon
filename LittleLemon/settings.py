@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 import os
 from dotenv import load_dotenv # type: ignore
@@ -31,6 +32,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework.authtoken",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "LittleLemonApi.apps.LittlelemonapiConfig",
     "djoser",
     "bleach",
@@ -121,6 +124,7 @@ REST_FRAMEWORK = {
         'rest_framework_xml.renderers.XMLRenderer',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES':(
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication', # Djoser
     ),
@@ -148,4 +152,8 @@ DJOSER={
     'SEND_ACTIVATION_EMAIL': True,
      #"LOGIN_FIELD":"email" #use the email address as the username
      #now go for LittleLemon.urls for further Configuration
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10)
 }
