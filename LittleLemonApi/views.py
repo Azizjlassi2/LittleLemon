@@ -3,10 +3,18 @@ from rest_framework.views import APIView
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User , Group
-from .models import*
+from .models import *
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated
 from django.core.paginator import Paginator , EmptyPage
+
+
+
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
+
+
 
 
 
@@ -18,12 +26,29 @@ from django.core.paginator import Paginator , EmptyPage
 
 class MenuItemsView(APIView):
     
-    permission_classes = [IsAuthenticated]    
+    permission_classes = [ IsAuthenticated ]    
 
    
-
-   
+    # Caching
+    @method_decorator(cache_page(60 * 60 * 24))
+    @method_decorator(vary_on_headers("Authorization"))
     def get(self,request) -> Response:
+
+        """
+
+        Return `MenuItem` list 
+
+        ### Filtering
+
+        - `category`
+        - `price`
+        - `featured`
+
+        ### Searching
+
+        - `search` : search by `title`
+
+        """
 
         
         # Query
@@ -32,17 +57,19 @@ class MenuItemsView(APIView):
         # Filtering 
         category_name = request.query_params.get('category')
         to_price = request.query_params.get('price')
-        search = request.query_params.get('search')
         featured_option = request.query_params.get('featured')
 
         if category_name:
             items = items.filter(category__title=category_name)
         if to_price:
             items = items.filter(price__lte=to_price)
-        if search:
-            items = items.filter(title__icontains=search)
         if featured_option:
             items = items.filter(featured=featured_option)
+
+        # Searching
+        search = request.query_params.get('search') #search by title
+        if search:
+            items = items.filter(title__icontains=search)
 
         # Ordering
         ordering = request.query_params.get('ordering')
@@ -68,6 +95,11 @@ class MenuItemsView(APIView):
 
 
     def post(self,request) -> Response:
+        """
+
+        Only `Manager` group users can have access
+
+        """
         if request.user.groups.filter(name="Manager").exists():
             serialzed_item = MenuItemSerializer(data=request.data)
             if serialzed_item.is_valid():
@@ -112,7 +144,10 @@ class MenuItemView(APIView):
 class ManagerGroupsView(APIView):
     
     permission_classes = [IsAuthenticated]
-
+    
+    # Caching
+    @method_decorator(cache_page(60 * 60 * 24))
+    @method_decorator(vary_on_headers("Authorization"))
     def get(self,request):
         users = User.objects.filter(groups__name__in =["Manager"])
         
@@ -193,7 +228,7 @@ class ManagerGroupView(APIView):
 
         if request.user.groups.filter(name="Manager").exists():
             user = get_object_or_404(User,pk = id,groups__name__in =["Manager"])
-            message = f"User {user.id} : {user.username} deleted !"
+            message = f"Manager Member {user.id} : {user.username} deleted !"
             user.delete()
             return Response(message,status.HTTP_200_OK)
         return Response(status.HTTP_403_FORBIDDEN)
@@ -204,6 +239,9 @@ class DeliveryCrewGroupsView(APIView):
     
     permission_classes = [IsAuthenticated]
 
+    # Caching
+    @method_decorator(cache_page(60 * 60 * 24))
+    @method_decorator(vary_on_headers("Authorization"))
     def get(self,request) -> Response:
         users = User.objects.filter(groups__name__in =["Delivery Crew"])
          
@@ -281,15 +319,19 @@ class DeliveryCrewGroupView(APIView):
 
         if request.user.groups.filter(name="Manager").exists():
             user = get_object_or_404(User,pk = id,groups__name__in =["Delivery Crew"])
-            message = f"User {user.id} : {user.username} deleted !"
+            message = f"Delivery Crew Member {user.id} : {user.username} deleted !"
             user.delete()
             return Response(message,status.HTTP_204_NO_CONTENT)
         return Response(status.HTTP_403_FORBIDDEN)
     
 
 class CartsView(APIView):
+
     permission_classes = [IsAuthenticated]
 
+    # Caching
+    @method_decorator(cache_page(60 * 60 * 24))
+    @method_decorator(vary_on_headers("Authorization"))
     def get(self,request) -> Response:
        
         carts = Cart.objects.filter(user=request.user.id)
@@ -339,6 +381,7 @@ class CartsView(APIView):
             cart.delete()
         return Response(status.HTTP_204_NO_CONTENT)
         
+
 class OrdersView(APIView):
 
     permissions_classes = [IsAuthenticated]
@@ -480,3 +523,104 @@ class OrderView(APIView):
             order = get_object_or_404(Order,id=id)
             order.delete()
             return Response(status.HTTP_204_NO_CONTENT)
+
+
+class CategoriesView(APIView):
+
+    permission_classes = [ IsAuthenticated ]    
+
+   
+
+   # Caching
+    @method_decorator(cache_page(60 * 60 * 24))
+    @method_decorator(vary_on_headers("Authorization"))
+    def get(self,request) -> Response:
+
+
+        
+        # Query
+        categories = Category.objects.all()
+
+        # Filtering 
+        category_name = request.query_params.get('category')
+        
+
+        if category_name:
+            categories = categories.filter(category__title=category_name)
+        
+        # Searching
+        search = request.query_params.get('search') #search by title
+        if search:
+            categories = categories.filter(title__icontains=search)
+
+        # Ordering
+        ordering = request.query_params.get('ordering')
+        if ordering:
+            categories.order_by(ordering)
+
+        # Pagination
+        perpage = request.query_params.get('perpage',default=8)
+        page = request.query_params.get('page',default=1)
+
+
+        paginator = Paginator(categories,per_page=perpage)
+        try:
+            categories = paginator.page(number=page)
+        except EmptyPage:
+            categories = []
+
+
+        # Serialization
+        serialized_categories = CategorySerializer(categories,many=True)
+        return Response(serialized_categories.data,status.HTTP_200_OK)
+
+
+    def post(self,request) -> Response:
+        """
+
+        Only `Manager` group users can have access
+
+        """
+        if request.user.groups.filter(name="Manager").exists():
+            serialzed_category = CategorySerializer(data=request.data)
+            if serialzed_category.is_valid():
+                serialzed_category.save()
+                return Response(serialzed_category.data,status.HTTP_201_CREATED)
+            else:
+                return Response(serialzed_category.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status.HTTP_403_FORBIDDEN)
+    
+
+class CategoryView(APIView):
+    
+    permission_classes = [IsAuthenticated]
+
+    def get(self,request,id) -> Response:
+        category = get_object_or_404(Category,pk = id)
+        serialized_category= CategorySerializer(category)
+        return Response(serialized_category.data,status.HTTP_200_OK)
+
+    def put(self,request,id) -> Response:
+        
+        if request.user.groups.filter(name="Manager").exists():
+            category = get_object_or_404(Category,pk = id)
+            serialized_category = CategorySerializer(category,data=request.data)
+            if serialized_category.is_valid():
+                serialized_category.save()
+                return Response(serialized_category.data,status.HTTP_206_PARTIAL_CONTENT)
+            
+            return Response(serialized_category.data,status.HTTP_304_NOT_MODIFIED)
+        return Response(status.HTTP_403_FORBIDDEN)
+        
+    def delete(self,request,id) -> Response:
+
+        if request.user.groups.filter(name="Manager").exists():
+            category = get_object_or_404(Category,pk = id)
+            message = f"Category {category.id} : {category.title} deleted !"
+            category.delete()
+            return Response(message,status.HTTP_200_OK)
+        return Response(status.HTTP_403_FORBIDDEN)
+    
+       
+
+

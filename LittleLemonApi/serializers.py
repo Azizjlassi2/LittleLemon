@@ -4,7 +4,6 @@ from django.contrib.auth.models import User
 from . import models
 import bleach
 
-
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Category
@@ -31,7 +30,7 @@ class MenuItemSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'price': {'min_value': 0.0},
             'stock': {'min_value': 0.0},
-            # To make sure that the title field remains unique in the MenuItems table
+            # To make sure that the title field remains unique in the MenuItem table
             'title': {
                     'validators': [
                         UniqueValidator(
