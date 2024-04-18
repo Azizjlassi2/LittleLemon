@@ -1,4 +1,18 @@
 
+# Hi, I'm Mohamed Aziz Jlassi ! 👋
+
+
+## 🚀 About Me
+
+*Je suis un `développeur Django Backend`, toujours prêt à apprendre et à contribuer à des projets innovants. Ma passion principale est le **Machine Learning** & **Deep Learning**, où je cherche à résoudre des problèmes complexes. Je suis ouvert à la collaboration sur **LinkedIn** dans ces domaines.*
+
+
+
+
+
+
+
+
 #  Little Lemon Restaurant
 We will create a fully functioning API project for the `Little Lemon Restaurant` so that the client application developers can use the APIs to develop web and mobile applications. People with different roles will be able to browse, add and edit menu items, place orders, browse orders, assign delivery crew to orders and finally deliver the orders. 
 
@@ -7,6 +21,8 @@ We will create a fully functioning API project for the `Little Lemon Restaurant`
  - Manager
 
  - Delivery crew
+
+ - Customer
 
 
 
@@ -43,7 +59,7 @@ We use Djoser Library in our project to automatically create the following endpo
 | `/token/login/` | Anyone with a valid credendials| `POST`  | Generates access tokens that can be used in other API calls in this project |
 
  
-Djoser will create other useful endpoints,you can check it [here](https://djoser.readthedocs.io/en/latest/) .
+Djoser will create other useful endpoints,you can check it [here](https://djoser.readthedocs.io/en/latest/getting_started.html#available-endpoints) .
 
 
 
@@ -51,55 +67,134 @@ Djoser will create other useful endpoints,you can check it [here](https://djoser
 
 ## API Reference
 
-###  Menu-items endpoints
 
-####  ---------------end-points--------------- 
+
+###  Menu-items Endpoints
+ 
+
+| GET | POST |
+| :-------- | :------- |
 
 ```http
-  GET /api/items
+/api/items/
 ```
 
-#### ---------------end-points--------------- 
+| GET | PUT | DELETE |
+| :-------- | :------- | :------- |
+
 
 ```http
-  GET /api/items/${id}
-```
-
-
-
-### User group management endpoints
-```http
-  GET /api/items
-```
-
-#### ---------------end-points--------------- 
-
-```http
-  GET /api/items/${id}
+/api/items/${id}
 ```
 
 
-### Cart management endpoints 
+
+### User group management Endpoints
+
+ - ###  Manager 
+
+
+| GET | POST |
+| :-------- | :------- |
+
 ```http
-  GET /api/items
+/api/manager/users/
 ```
 
-#### ---------------end-points--------------- 
+| GET | PUT | DELETE |
+| :-------- | :------- | :------- |
 
 ```http
-  GET /api/items/${id}
+/api/manager/users/${id}
+```
+
+| GET | POST |
+| :-------- | :------- |
+
+- ###  Delivery Crew 
+
+```http
+/api/delivery-crew/users/
+```
+
+| GET | PUT | DELETE |
+| :-------- | :------- | :------- |
+
+```http
+/api/delivery-crew/users/${id}
 ```
 
 
-### Order management endpoints
+### Cart management Endpoints 
+
+| GET | POST | DELETE |
+| :-------- | :------- | :----------|
+
 ```http
-  GET /api/items
+/api/carts/menu-items/
 ```
 
-#### ---------------end-points--------------- 
+
+
+### Order management Endpoints
+
+
+| GET | POST |
+| :-------- | :------- |
 
 ```http
-  GET /api/items/${id}
+/api/orders/
+```
+| GET | POST | DELETE |
+| :-------- | :------- | :----------|
+
+```http
+/api/orders/${id}
+```
+
+
+
+### Categories management Endpoints
+
+
+| GET | POST |
+| :-------- | :------- |
+
+```http
+/api/categories/
+```
+| GET | POST | DELETE |
+| :-------- | :------- | :----------|
+
+```http
+/api/categories/${id}
+```
+
+
+
+
+### Tokens management Endpoints
+
+
+| POST |
+| :-------- | 
+
+```http
+/api/token/
+```
+
+| POST |
+| :-------- | 
+
+```http
+/api/token/refresh/
+```
+
+| POST |
+| :-------- | 
+
+```http
+/api/token/blacklist/
 ```
 
 
