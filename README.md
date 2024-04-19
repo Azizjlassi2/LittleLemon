@@ -4,7 +4,7 @@
 
 ## 🚀 About Me
 
-*Je suis un `développeur Django Backend`, toujours prêt à apprendre et à contribuer à des projets innovants. Ma passion principale est le **Machine Learning** & **Deep Learning**, où je cherche à résoudre des problèmes complexes. Je suis ouvert à la collaboration sur **LinkedIn** dans ces domaines.*
+*I'm a Django Backend Developer, always willing to learn and contribute to innovative projects. My key passion is Machine Learning & Deep Learning, where I seek to solve complex problems. I'm interested in collaborating with others on LinkedIn in these topics.*
 
 
 
