@@ -2,7 +2,6 @@ from django.test import TestCase,Client
 from rest_framework.test import force_authenticate ,APIRequestFactory
 from rest_framework.views import  APIView
 from django.contrib.auth.models import User , Group
-from rest_framework import status
 from ..views import *
 from django.urls import reverse
 
@@ -277,38 +276,3 @@ class SmokeTest(TestCase):
         self.assertEqual(get_response.status_code,200)
         self.assertEqual(post_response.status_code,201)
         self.assertTrue(delivery_group)
-"""
-    def test_single_delivery_crew_endpoint(self):
-
-        # SETUP
-        self.view = ManagerGroupView.as_view()
-        self.user.groups.add(self.managers_group)
-       
-        
-        # TEST CASES
-
-        # GET REQUEST
-        get_request = self.client.get("/groups/manager/users/<int:id>/")
-        force_authenticate(get_request,self.user)
-        get_response = self.view(get_request,id=self.user.pk)
-
-
-        # PUT REQUEST
-        put_request = self.client.get("/groups/manager/users/<int:id>/",data={"username":"new_manager_username"})
-        force_authenticate(put_request,self.user)
-        put_response = self.view(put_request,id=self.user.pk)
-
-
-        # DELETE REQUEST
-        delete_request = self.client.get("/groups/manager/users/<int:id>/")
-        force_authenticate(delete_request,self.user)
-        delete_response = self.view(delete_request,id=self.user.pk)
-
-
-        
-        #CHECK
-        self.assertEqual(get_response.status_code,200)
-        self.assertEqual(put_response.status_code ,200)
-        self.assertEqual(delete_response.status_code,200)
-"""
-    
