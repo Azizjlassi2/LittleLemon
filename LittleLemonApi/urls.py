@@ -1,7 +1,6 @@
 from django.urls import path
 
 from .views import *
-from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns = [
     # Menu-Item
@@ -13,15 +12,15 @@ urlpatterns = [
     path("categories/<int:id>/",CategoryView.as_view(),name="single-category"),
 
     # Manager Members
-    path("groups/manager/users/",ManagerGroupsView.as_view(),name="managers"),
-    path("groups/manager/users/<int:id>/",ManagerGroupView.as_view(),name="single-manager"),
+    path("manager/users/",ManagerGroupsView.as_view(),name="managers"),
+    path("manager/users/<int:id>/",ManagerGroupView.as_view(),name="single-manager"),
 
     # Delivery Crew Members
-    path("groups/delivery-crew/users/",DeliveryCrewGroupsView.as_view(),name="delivery-crews"),
-    path("groups/delivery-crew/users/<int:id>",DeliveryCrewGroupView.as_view(),name="single-delivery-crew"),
+    path("delivery-crew/users/",DeliveryCrewGroupsView.as_view(),name="delivery-crews"),
+    path("delivery-crew/users/<int:id>/",DeliveryCrewGroupView.as_view(),name="single-delivery-crew"),
 
     # Cart
-    path("carts/menu-items/",CartsView.as_view(),name="cart"),
+    path("carts/menu-items/",CartsView.as_view(),name="carts"),
 
     # Orders
     path("orders/",OrdersView.as_view(),name="orders"),
