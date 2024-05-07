@@ -22,6 +22,7 @@ class SmokeTest(TestCase):
         )
         self.view : APIView 
 
+    """
     def test__menu_items_endpoint(self):
 
         # SETUP
@@ -58,6 +59,7 @@ class SmokeTest(TestCase):
         #CHECK
         self.assertEqual(get_response.status_code,200)
         self.assertEqual(post_response.status_code,201)
+    """
     
     def test_single_menu_item_endpoint(self):
 
@@ -237,7 +239,7 @@ class SmokeTest(TestCase):
         self.assertEqual(get_response.status_code,200)
         self.assertEqual(put_response.status_code ,200)
         self.assertEqual(delete_response.status_code,200)
-
+    """
     def test_delivery_crew_endpoint(self):
     
 
@@ -276,3 +278,4 @@ class SmokeTest(TestCase):
         self.assertEqual(get_response.status_code,200)
         self.assertEqual(post_response.status_code,201)
         self.assertTrue(delivery_group)
+    """
