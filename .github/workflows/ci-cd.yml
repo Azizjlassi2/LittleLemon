@@ -6,7 +6,7 @@ on:
       - dev
 jobs:
   build:
-    name: Install Requirements
+    name: Install requirements and Execute tests
     runs-on: ubuntu-latest
     steps:
       - name: Update
@@ -26,11 +26,7 @@ jobs:
 
       - name: Making Database Migrations
         run: python3 manage.py makemigrations && python3 manage.py migrate
-  test:
-    name: Execute Tests
-    runs-on: ubuntu-latest
-    needs: [build]
-    steps:
+
       - name: Execute tests
         env:
           DJANGO_SETTINGS_MODULE: LittleLemon.settings
