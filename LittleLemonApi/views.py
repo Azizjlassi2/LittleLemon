@@ -1,22 +1,19 @@
 from rest_framework.response import Response 
 from rest_framework.views import APIView
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+
+
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User , Group
-from .models import *
-from .serializers import *
-from rest_framework.permissions import IsAuthenticated
 from django.core.paginator import Paginator , EmptyPage
-
-
-
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
 
 
-
-
+from .serializers import *
+from .models import *
 
 
 
@@ -49,8 +46,6 @@ class MenuItemsView(APIView):
         - `search` : search by `title`
 
         """
-
-        
         # Query
         items = MenuItem.objects.all().order_by("title")
 
@@ -93,7 +88,6 @@ class MenuItemsView(APIView):
         serialized_items = MenuItemSerializer(items,many=True)
         return Response(serialized_items.data,status.HTTP_200_OK)
 
-
     def post(self,request) -> Response:
         """
 
@@ -125,10 +119,10 @@ class MenuItemView(APIView):
             serialized_item = MenuItemSerializer(item,data=request.data)
             if serialized_item.is_valid():
                 serialized_item.save()
-                return Response(serialized_item.data,status.HTTP_206_PARTIAL_CONTENT)
+                return Response(serialized_item.data,status=status.HTTP_206_PARTIAL_CONTENT)
             
-            return Response(serialized_item.data,status.HTTP_304_NOT_MODIFIED)
-        return Response(status.HTTP_403_FORBIDDEN)
+            return Response(serialized_item.data,status=status.HTTP_304_NOT_MODIFIED)
+        return Response(status=status.HTTP_403_FORBIDDEN)
         
     def delete(self,request,id) -> Response:
 
@@ -136,11 +130,9 @@ class MenuItemView(APIView):
             item = get_object_or_404(MenuItem,pk = id)
             message = f"MenuItem {item.id} : {item.title} deleted !"
             item.delete()
-            return Response(message,status.HTTP_200_OK)
-        return Response(status.HTTP_403_FORBIDDEN)
-    
-       
-
+            return Response(message,status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_403_FORBIDDEN)
+        
 class ManagerGroupsView(APIView):
     
     permission_classes = [IsAuthenticated]
@@ -149,7 +141,8 @@ class ManagerGroupsView(APIView):
     @method_decorator(cache_page(60 * 60 * 24))
     @method_decorator(vary_on_headers("Authorization"))
     def get(self,request):
-        users = User.objects.filter(groups__name__in =["Manager"])
+        #Suery
+        users = User.objects.filter(groups__name__in =["Manager"]).order_by("username")
         
         # Filtering
         date_joined  = request.query_params.get('joined')
@@ -178,20 +171,27 @@ class ManagerGroupsView(APIView):
             users = []
 
 
-        serialized_users = UserGroupSerializer(users,many=True)
+        serialized_users = UserManagerGroupSerializer(users,many=True)
         return Response(serialized_users.data,status.HTTP_200_OK)
     
 
     def post(self,request):
         if request.user.groups.filter(name="Manager").exists():
             
-            serialized_user = UserGroupSerializer(data=request.data)
+            serialized_user = UserManagerGroupSerializer(data=request.data)
             if serialized_user.is_valid():
                 serialized_user.save()
-                manager_group = Group.objects.get(name="Manager")
-                manager_group.user_set.add(serialized_user.data["id"])
-                manager_group.save()
-                return Response(serialized_user.data,status.HTTP_201_CREATED)
+                
+                manager_group  = Group.objects.get(name="Manager")
+                user = User.objects.get(pk=serialized_user.data.get("id"))
+                user.groups.add(manager_group)
+                user.save()
+
+
+                data = serialized_user.data
+                data["groups"] = GroupSerializer(manager_group).data
+                
+                return Response(data,status.HTTP_201_CREATED)
             else:
                 return Response(serialized_user.errors, status=status.HTTP_400_BAD_REQUEST)
             
@@ -200,13 +200,12 @@ class ManagerGroupsView(APIView):
 class ManagerGroupView(APIView):
     
     permission_classes = [IsAuthenticated]
-    group_manager_id =  manager_group = Group.objects.get(name="Manager").pk
 
 
     def get(self,request,id) -> Response:
         user = get_object_or_404(User,pk = id,groups__name__in =["Manager"])
         
-        serialized_user = UserGroupSerializer(user)
+        serialized_user = UserManagerGroupSerializer(user)
         return Response(serialized_user.data,status.HTTP_200_OK)
 
     def put(self,request,id) -> Response:
@@ -215,7 +214,7 @@ class ManagerGroupView(APIView):
             
             user = get_object_or_404(User,pk = id,groups__name__in =["Manager"])
             print(user)
-            serialized_user = UserGroupSerializer(user,data=request.data)
+            serialized_user = UserManagerGroupSerializer(user,data=request.data)
             print(serialized_user)
             if serialized_user.is_valid():
                 serialized_user.save()
@@ -230,10 +229,12 @@ class ManagerGroupView(APIView):
             user = get_object_or_404(User,pk = id,groups__name__in =["Manager"])
             message = f"Manager Member {user.id} : {user.username} deleted !"
             user.delete()
+            try:
+                user = get_object_or_404(User,pk = id,groups__name__in =["Manager"])
+            except Exception:
+                return Response(status.HTTP_404_NOT_FOUND)
             return Response(message,status.HTTP_200_OK)
         return Response(status.HTTP_403_FORBIDDEN)
-    
-
     
 class DeliveryCrewGroupsView(APIView):
     
@@ -243,7 +244,7 @@ class DeliveryCrewGroupsView(APIView):
     @method_decorator(cache_page(60 * 60 * 24))
     @method_decorator(vary_on_headers("Authorization"))
     def get(self,request) -> Response:
-        users = User.objects.filter(groups__name__in =["Delivery Crew"])
+        users = User.objects.filter(groups__name__in =["Delivery Crew"]).order_by("username")
          
         # Filtering
         date_joined  = request.query_params.get('joined')
@@ -270,20 +271,27 @@ class DeliveryCrewGroupsView(APIView):
             users = paginator.page(number=page)
         except EmptyPage:
             users = []
-        serialized_users = UserGroupSerializer(users,many=True)
+        serialized_users = UserDeliveryGroupSerializer(users,many=True)
         return Response(serialized_users.data,status.HTTP_200_OK)
     
 
     def post(self,request) -> Response:
         if request.user.groups.filter(name="Manager").exists():
-            
-            serialized_user = UserGroupSerializer(data=request.data)
+
+            serialized_user = UserDeliveryGroupSerializer(data=request.data)
             if serialized_user.is_valid():
                 serialized_user.save()
-                delivery_crew_group = Group.objects.get(name="Delivery Crew")
-                delivery_crew_group.user_set.add(serialized_user.data["id"])
-                delivery_crew_group.save()
-                return Response(serialized_user.data,status.HTTP_201_CREATED)
+
+                delivery_group  = Group.objects.get(name="Delivery Crew")
+                user = User.objects.get(pk=serialized_user.data.get("id"))
+                user.groups.add(delivery_group)
+                user.save()
+
+
+                data = serialized_user.data
+                data["groups"] = GroupSerializer(delivery_group).data
+                
+                return Response(data,status.HTTP_201_CREATED)
             else:
                 return Response(serialized_user.errors, status=status.HTTP_400_BAD_REQUEST)
             
@@ -297,22 +305,19 @@ class DeliveryCrewGroupView(APIView):
     def get(self,request,id) -> Response:
         user = get_object_or_404(User,pk = id,groups__name__in =["Delivery Crew"])
         
-        serialized_user = UserGroupSerializer(user)
+        serialized_user = UserDeliveryGroupSerializer(user)
         return Response(serialized_user.data,status.HTTP_200_OK)
 
     def put(self,request,id) -> Response:
         
         if request.user.groups.filter(name="Manager").exists():
-            
             user = get_object_or_404(User,pk = id,groups__name__in =["Delivery Crew"])
-            print(user)
-            serialized_user = UserGroupSerializer(user,data=request.data)
-            print(serialized_user)
+            serialized_user = UserDeliveryGroupSerializer(user,data=request.data)
             if serialized_user.is_valid():
                 serialized_user.save()
                 return Response(serialized_user.data,status.HTTP_206_PARTIAL_CONTENT)
             
-            return Response(serialized_user.data,status.HTTP_304_NOT_MODIFIED)
+            return Response(serialized_user.errors,status.HTTP_304_NOT_MODIFIED)
         return Response(status.HTTP_403_FORBIDDEN)
         
     def delete(self,request,id) -> Response:
@@ -324,7 +329,6 @@ class DeliveryCrewGroupView(APIView):
             return Response(message,status.HTTP_204_NO_CONTENT)
         return Response(status.HTTP_403_FORBIDDEN)
     
-
 class CartsView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -381,7 +385,6 @@ class CartsView(APIView):
             cart.delete()
         return Response(status.HTTP_204_NO_CONTENT)
         
-
 class OrdersView(APIView):
 
     permissions_classes = [IsAuthenticated]
@@ -524,7 +527,6 @@ class OrderView(APIView):
             order.delete()
             return Response(status.HTTP_204_NO_CONTENT)
 
-
 class CategoriesView(APIView):
 
     permission_classes = [ IsAuthenticated ]    
@@ -539,7 +541,7 @@ class CategoriesView(APIView):
 
         
         # Query
-        categories = Category.objects.all()
+        categories = Category.objects.all().order_by("title")
 
         # Filtering 
         category_name = request.query_params.get('category')
@@ -590,7 +592,6 @@ class CategoriesView(APIView):
                 return Response(serialzed_category.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(status.HTTP_403_FORBIDDEN)
     
-
 class CategoryView(APIView):
     
     permission_classes = [IsAuthenticated]
