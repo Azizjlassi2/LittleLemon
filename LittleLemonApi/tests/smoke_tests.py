@@ -1,12 +1,11 @@
-from django.test import TestCase,Client 
 from rest_framework.test import force_authenticate ,APIRequestFactory
 from rest_framework.views import  APIView
 from django.contrib.auth.models import User , Group
 from ..views import *
 from django.urls import reverse
 
+from django.test import TestCase
 
-# py manage.py test LittleLemonApi.tests.smoke_tests
 class SmokeTest(TestCase):
 
     def setUp(self) -> None:
@@ -21,7 +20,6 @@ class SmokeTest(TestCase):
             name="Delivery Crew"
         )
         self.view : APIView 
-
     def test__menu_items_endpoint(self):
 
         # SETUP
