@@ -23,4 +23,4 @@ jobs:
         env:
           DJANGO_SETTINGS_MODULE: LittleLemon.settings
 
-        run: python3 manage.py test LittleLemonApi.tests.smoke_test
+        run: python3 manage.py test LittleLemonApi.tests.smoke_tests
